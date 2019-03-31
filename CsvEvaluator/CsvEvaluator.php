@@ -16,84 +16,105 @@ class CsvEvaluator {
     }
 
     private function initializeReader() {
-        $this->reader = new Csv();
-        $this->reader->setDelimiter(',');
-        $this->reader->setEnclosure('');
-        $this->reader->setSheetIndex(0);
+        try {
+            $this->reader = new Csv();
+            $this->reader->setDelimiter(',');
+            $this->reader->setEnclosure('');
+            $this->reader->setSheetIndex(0);
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
     }    
 
     private function initializeSpreasheet($csvFilePath) {
-        $this->spreadsheet = $this->reader->load($csvFilePath);
+        try {
+            $this->spreadsheet = $this->reader->load($csvFilePath);
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
     }
 
     private function getEvaluatedCellValue($cell) {
-        $evaluatedCellValue = 0;
-        // TODO: Handle non-digit
-        // TODO: Handle tab
-        // TODO: Handle infinite recursion
-        $cellValue = explode(' ', preg_replace('/\s{2,}/', ' ', $cell));
-        foreach ($cellValue as $value) {
-            if (is_numeric($value)) {
-                $evaluatedCellValue += (int) $value;
-            } elseif (!is_null($this->spreadsheet->getActiveSheet()->getCell($value)->getValue())) {
-                if (is_numeric($this->spreadsheet->getActiveSheet()->getCell($value)->getValue())) {
-                    $evaluatedCellValue += (int) $this->spreadsheet->getActiveSheet()->getCell($value)->getValue();    
-                } else {
-                    $tempEvaluatedCellValue = $this->getEvaluatedCellValue($this->spreadsheet->getActiveSheet()->getCell($value)->getValue());
-                    if (is_numeric($tempEvaluatedCellValue)) {
-                        $evaluatedCellValue += $tempEvaluatedCellValue;
+        try {
+            // TODO: Handle non-digit
+            // TODO: Handle tab
+            // TODO: Handle infinite recursion
+            $evaluatedCellValue = 0;
+            $cellValue = explode(' ', preg_replace('/\s{2,}/', ' ', $cell));
+            foreach ($cellValue as $value) {
+                if (is_numeric($value)) {
+                    $evaluatedCellValue += (int) $value;
+                } elseif (!is_null($this->spreadsheet->getActiveSheet()->getCell($value)->getValue())) {
+                    if (is_numeric($this->spreadsheet->getActiveSheet()->getCell($value)->getValue())) {
+                        $evaluatedCellValue += (int) $this->spreadsheet->getActiveSheet()->getCell($value)->getValue();    
                     } else {
-                        $evaluatedCellValue = $tempEvaluatedCellValue;
-                        break;
+                        $tempEvaluatedCellValue = $this->getEvaluatedCellValue($this->spreadsheet->getActiveSheet()->getCell($value)->getValue());
+                        if (is_numeric($tempEvaluatedCellValue)) {
+                            $evaluatedCellValue += $tempEvaluatedCellValue;
+                        } else {
+                            $evaluatedCellValue = $tempEvaluatedCellValue;
+                            break;
+                        }
                     }
+                } else {
+                    $evaluatedCellValue = '#ERR';
+                    break;
                 }
-            } else {
-                $evaluatedCellValue = '#ERR';
-                break;
             }
+            return $evaluatedCellValue;
+        } catch (Exception $e) {
+            echo $e->getMessage();
         }
-        return $evaluatedCellValue;
     }
 
     public function evaluate() {
-        $fp = fopen('output.csv', 'w');
-        foreach ($this->getCsvData() as $row) {
-            $evaluatedRow = array();
-            foreach ($row as $cell) {
-                $evaluatedCellValue = 0;
-                // TODO: Handle non-digit
-                // TODO: Handle tab
-                // TODO: Handle infinite recursion
-                $cellValue = explode(' ', preg_replace('/\s{2,}/', ' ', $cell));
-                foreach ($cellValue as $value) {
-                    if (is_numeric($value)) {
-                        $evaluatedCellValue += (int) $value;
-                    } elseif (!is_null($this->spreadsheet->getActiveSheet()->getCell($value)->getValue())) {
-                        if (is_numeric($this->spreadsheet->getActiveSheet()->getCell($value)->getValue())) {
-                            $evaluatedCellValue += (int) $this->spreadsheet->getActiveSheet()->getCell($value)->getValue();
-                        } else {
-                            $tempEvaluatedCellValue = $this->getEvaluatedCellValue($this->spreadsheet->getActiveSheet()->getCell($value)->getValue());
-                            if (is_numeric($tempEvaluatedCellValue)) {
-                                $evaluatedCellValue += $tempEvaluatedCellValue;
+        try {
+            $fp = fopen('output.csv', 'w');
+            foreach ($this->getCsvData() as $row) {
+                $evaluatedRow = array();
+                foreach ($row as $cell) {
+                    $evaluatedCellValue = 0;
+                    // TODO: Handle non-digit
+                    // TODO: Handle tab
+                    // TODO: Handle infinite recursion
+                    $cellValue = explode(' ', preg_replace('/\s{2,}/', ' ', $cell));
+                    foreach ($cellValue as $value) {
+                        if (is_numeric($value)) {
+                            $evaluatedCellValue += (int) $value;
+                        } elseif (!is_null($this->spreadsheet->getActiveSheet()->getCell($value)->getValue())) {
+                            if (is_numeric($this->spreadsheet->getActiveSheet()->getCell($value)->getValue())) {
+                                $evaluatedCellValue += (int) $this->spreadsheet->getActiveSheet()->getCell($value)->getValue();
                             } else {
-                                $evaluatedCellValue = $tempEvaluatedCellValue;
-                                break;
+                                $tempEvaluatedCellValue = $this->getEvaluatedCellValue($this->spreadsheet->getActiveSheet()->getCell($value)->getValue());
+                                if (is_numeric($tempEvaluatedCellValue)) {
+                                    $evaluatedCellValue += $tempEvaluatedCellValue;
+                                } else {
+                                    $evaluatedCellValue = $tempEvaluatedCellValue;
+                                    break;
+                                }
                             }
+                        } else {
+                            $evaluatedCellValue = '#ERR';
+                            break;
                         }
-                    } else {
-                        $evaluatedCellValue = '#ERR';
-                        break;
                     }
+                    $evaluatedRow[] = $evaluatedCellValue;
                 }
-                $evaluatedRow[] = $evaluatedCellValue;
+                fputcsv($fp, $evaluatedRow);
             }
-            fputcsv($fp, $evaluatedRow);
+            fclose($fp);
+            echo 'Output generated in output.csv...' . PHP_EOL;
+        } catch (Exception $e) {
+            echo $e->getMessage();
         }
-        fclose($fp);
     }
 
     private function getCsvData() {
-        $this->sheetData = $this->spreadsheet->getActiveSheet()->toArray();
-        return $this->sheetData;
+        try {
+            $this->sheetData = $this->spreadsheet->getActiveSheet()->toArray();
+            return $this->sheetData;
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
     }
 }
