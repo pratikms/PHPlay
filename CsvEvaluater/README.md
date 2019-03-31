@@ -11,11 +11,14 @@ Write a command line program to which parses a spreadsheet-like CSV file and eva
 The program should print out the results in CSV format of the same dimensions containing the results of evaluating each cell to its final value. If any cell is an invalid expression, then for that cell only print #ERR.
 
 For example, for the following CSV input:
+
 | | | |
 | --- | --- | --- |
 | 5 | 3 A1 | B1 B1 |
 | A1 | D5 | B2 1 |
+
 ...output (in csv format!):
+
 | | | |
 | --- | --- | --- |
 | 5 | 8 | 16 |
