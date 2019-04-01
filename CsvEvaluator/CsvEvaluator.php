@@ -34,7 +34,7 @@ class CsvEvaluator {
         }
     }
 
-    private function getEvaluatedCellValue($cell) {
+    private function evaluateNonNumericCell($cell) {
         try {
             // TODO: Handle non-digit
             // TODO: Handle tab
@@ -48,7 +48,7 @@ class CsvEvaluator {
                     if (is_numeric($this->spreadsheet->getActiveSheet()->getCell($value)->getValue())) {
                         $evaluatedCellValue += (int) $this->spreadsheet->getActiveSheet()->getCell($value)->getValue();    
                     } else {
-                        $tempEvaluatedCellValue = $this->getEvaluatedCellValue($this->spreadsheet->getActiveSheet()->getCell($value)->getValue());
+                        $tempEvaluatedCellValue = $this->evaluateNonNumericCell($this->spreadsheet->getActiveSheet()->getCell($value)->getValue());
                         if (is_numeric($tempEvaluatedCellValue)) {
                             $evaluatedCellValue += $tempEvaluatedCellValue;
                         } else {
@@ -85,7 +85,7 @@ class CsvEvaluator {
                             if (is_numeric($this->spreadsheet->getActiveSheet()->getCell($value)->getValue())) {
                                 $evaluatedCellValue += (int) $this->spreadsheet->getActiveSheet()->getCell($value)->getValue();
                             } else {
-                                $tempEvaluatedCellValue = $this->getEvaluatedCellValue($this->spreadsheet->getActiveSheet()->getCell($value)->getValue());
+                                $tempEvaluatedCellValue = $this->evaluateNonNumericCell($this->spreadsheet->getActiveSheet()->getCell($value)->getValue());
                                 if (is_numeric($tempEvaluatedCellValue)) {
                                     $evaluatedCellValue += $tempEvaluatedCellValue;
                                 } else {
